@@ -1,0 +1,245 @@
+{
+	"familyTree": [
+		{
+			"name": "Iskefrane Sen-duga",
+			"birth": "2000 BC",
+			"death": "1975 BC",
+			"spouses": [
+				{
+					"name": "Tarákharni Khur",
+					"birth": "2005 BC",
+					"death": "1980 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Skarávik Sen-duga",
+					"birth": "1985 BC",
+					"death": "1955 BC"
+				},
+				{
+					"name": "Khrisælach Sen-duga",
+					"birth": "1980 BC",
+					"death": "1950 BC"
+				},
+				{
+					"name": "Bílva Khur Sen-duga",
+					"birth": "1978 BC",
+					"death": "1945 BC"
+				}
+			]
+		},
+		{
+			"name": "Skarávik Sen-duga",
+			"birth": "1985 BC",
+			"death": "1955 BC",
+			"spouses": [
+				{
+					"name": "Tužhki Arpad Sen-duga",
+					"birth": "1980 BC",
+					"death": "1955 BC"
+				},
+				{
+					"name": "Bayrakhni Khur",
+					"birth": "1982 BC",
+					"death": "1948 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Grifrasar Sen-duga",
+					"birth": "1955 BC",
+					"death": "1925 BC"
+				},
+				{
+					"name": "Orbala Sen-duga",
+					"birth": "1950 BC",
+					"death": "1915 BC"
+				},
+				{
+					"name": "Tiravharni Sen-duga",
+					"birth": "1948 BC",
+					"death": "1915 BC"
+				}
+			]
+		},
+		{
+			"name": "Grifrasar Sen-duga",
+			"birth": "1955 BC",
+			"death": "1925 BC",
+			"spouses": [
+				{
+					"name": "Amidris Sen-duga",
+					"birth": "1957 BC",
+					"death": "1923 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Fangrassir Sen-duga",
+					"birth": "1920 BC",
+					"death": "1885 BC"
+				},
+				{
+					"name": "Ashavanth Sen-duga",
+					"birth": "1918 BC",
+					"death": "1882 BC"
+				}
+			]
+		},
+		{
+			"name": "Orbala Sen-duga",
+			"birth": "1950 BC",
+			"death": "1915 BC",
+			"spouses": [
+				{
+					"name": "Khammalor Sen-duga",
+					"birth": "1955 BC",
+					"death": "1920 BC"
+				},
+				{
+					"name": "Talaranna Khur",
+					"birth": "1952 BC",
+					"death": "1910 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Möysigran Sen-duga",
+					"birth": "1915 BC",
+					"death": "1875 BC"
+				},
+				{
+					"name": "Larsva Sen-duga",
+					"birth": "1910 BC",
+					"death": "1875 BC"
+				}
+			]
+		},
+		{
+			"name": "Fangrassir Sen-duga",
+			"birth": "1920 BC",
+			"death": "1885 BC",
+			"spouses": [
+				{
+					"name": "Támivra Sen-duga",
+					"birth": "1923 BC",
+					"death": "1885 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Varyos Khur Sen-duga",
+					"birth": "1880 BC",
+					"death": "1850 BC"
+				},
+				{
+					"name": "Hjaro Sümu Sen-duga",
+					"birth": "1878 BC",
+					"death": "1845 BC"
+				}
+			]
+		},
+		{
+			"name": "Ashavanth Sen-duga",
+			"birth": "1918 BC",
+			"death": "1882 BC",
+			"spouses": [
+				{
+					"name": "Grasslithar Sen-duga",
+					"birth": "1920 BC",
+					"death": "1882 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Varimrah Sen-duga",
+					"birth": "1885 BC",
+					"death": "1855 BC"
+				},
+				{
+					"name": "Beryllia Sen-duga",
+					"birth": "1880 BC",
+					"death": "1850 BC"
+				}
+			]
+		},
+		{
+			"name": "Möysigran Sen-duga",
+			"birth": "1915 BC",
+			"death": "1875 BC",
+			"spouses": [
+				{
+					"name": "Bahalithan Sen-duga",
+					"birth": "1918 BC",
+					"death": "1875 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Bayanisstr Sen-duga",
+					"birth": "1885 BC",
+					"death": "1850 BC"
+				},
+				{
+					"name": "Jorin Khan Sen-duga",
+					"birth": "1882 BC",
+					"death": "1855 BC"
+				}
+			]
+		},
+		{
+			"name": "Bayanisstr Sen-duga",
+			"birth": "1885 BC",
+			"death": "1850 BC",
+			"spouses": [
+				{
+					"name": "Arthillna Khur Sen-duga",
+					"birth": "1883 BC",
+					"death": "1850 BC"
+				},
+				{
+					"name": "Viraslan Sen-duga",
+					"birth": "1880 BC",
+					"death": "1855 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Varyos Khur Sen-duga",
+					"birth": "1878 BC",
+					"death": "1845 BC"
+				},
+				{
+					"name": "Thyrras Sen-duga",
+					"birth": "1875 BC",
+					"death": "1840 BC"
+				}
+			]
+		},
+		{
+			"name": "Varyos Khur Sen-duga",
+			"birth": "1878 BC",
+			"death": "1845 BC",
+			"spouses": [
+				{
+					"name": "Mithalor Sen-duga",
+					"birth": "1879 BC",
+					"death": "1840 BC"
+				}
+			],
+			"children": [
+				{
+					"name": "Tulâdang Sen-duga",
+					"birth": "1825 BC",
+					"death": "1805 BC"
+				},
+				{
+					"name": "Skarhanger II Sen-duga",
+					"birth": "1820 BC",
+					"death": "1800 BC"
+				}
+			]
+		}
+	]
+}
