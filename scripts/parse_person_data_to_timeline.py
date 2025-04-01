@@ -2,7 +2,7 @@ import json
 import os
 import random
 
-# Variable for the value of row 1, column 1 (this can be updated later via a config)
+# Variable for the value of row 1, column 1
 row_1_col_1_value = "Simit-sil-hak"
 
 # Path to the external JSON file
@@ -42,30 +42,32 @@ for family in data['familyTree']:
         add_person(child)
 
 # Set minimum year to -2000 and find the latest death year dynamically
-min_year = -2000
+min_year = -2010
 max_year = max(death_years)
-
-# Generate the range of years from -2000 to the latest death year
-years = list(range(min_year, max_year + 1))
 
 # Prepare the output lines for the tab-delimited file
 output_lines = []
 
 # First row: Place the variable in the first column, without adding the year columns
-first_row = [row_1_col_1_value] + [""] * len(years)
+first_row = [row_1_col_1_value] + ["" for _ in range(min_year, max_year + 1)]
 output_lines.append("\t".join(first_row))
 
 # Process each person
 for name, (birth_year, death_year) in people.items():
-    row = [""] * (len(years) + 1)  # Empty row with first column blank
+    row = [""] * (len(range(min_year, max_year + 1)) + 1)  # Empty row with first column blank
     row[0] = name  # Set the name in the first column
 
-    # Find the index in the years list and mark "birth" and "death"
-    birth_index = years.index(birth_year) + 1  # Offset by 1 for first blank field
-    death_index = years.index(death_year) + 1  # Offset by 1 for first blank field
+    # Find the index in the years list
+    birth_index = birth_year - min_year + 1
+    death_index = death_year - min_year + 1
 
-    row[birth_index] = "birth"
-    row[death_index] = "death"
+    # Populate the row with age progression
+    for i in range(birth_index, death_index + 1):
+        age = i - birth_index  # Calculate age
+        row[i] = str(age)
+
+    row[birth_index] = "birth"  # Mark birth
+    row[death_index] = "death"  # Mark death
 
     # Add the row to output
     output_lines.append("\t".join(row))
@@ -86,11 +88,11 @@ def generate_id():
     return ''.join(random.choices("0123456789abcdef", k=16))
 
 # Create nodes array
-nodes = []
 y_position = 0  # Start y at 0, increment by 70 for each record
+nodes = []
 
 for name in people.keys():
-    nodes.append({
+    node = {
         "id": generate_id(),
         "type": "text",
         "text": f"[[{name}]]",
@@ -98,20 +100,17 @@ for name in people.keys():
         "y": y_position,
         "width": 350,
         "height": 60
-    })
+    }
+    nodes.append(node)
     y_position += 70  # Increment y for the next record
-
-# Create the final JSON structure
-json_output = {
-    "nodes": nodes,
-    "edges": []  # No edges specified yet
-}
 
 # Define the output file name for the JSON file
 json_output_file_path = "family_tree_nodes.json"
 
-# Write the JSON output to a file
+# Write the JSON output with each node on a single line
 with open(json_output_file_path, "w", encoding="utf-8") as f:
-    json.dump(json_output, f, indent=4)
+    f.write('{"nodes": [\n')
+    f.write(",\n".join(json.dumps(node, separators=(',', ':')) for node in nodes))
+    f.write('\n],"edges": []}\n')
 
 print(f"JSON nodes output written to {json_output_file_path}")
