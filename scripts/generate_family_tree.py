@@ -140,7 +140,7 @@ class Person:
 
     def is_queer(self, probability=0.1):
         """Returns True with a given probability."""
-        return random.random() < probability
+        return self.gender_identity != "cis" or self.attraction != "straight"
 
 
     ###########################################################################
