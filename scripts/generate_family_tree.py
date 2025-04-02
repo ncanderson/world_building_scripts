@@ -217,7 +217,7 @@ def main():
         print(f"Simulating year: {current_year}")
 
         p = Person(current_year)
-        if p.gender_identity.startswith("trans"):
+        if p.gender_identity.startswith("trans woman"):
             living_people.append(p)
 
         current_year = update_year(current_year, year_steps, is_btr, generation_end_year)
