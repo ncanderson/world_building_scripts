@@ -19,12 +19,25 @@ class Helpers:
         return max(min_val, min(max_val, random.gauss(mu=mean, sigma=std_deviation)))
 
 
+    ###########################################################################
+
+
+    @staticmethod
+    def tragedy_strikes(tragedy_probability) -> bool:
+        """!
+        @brief Check the tragedy probability and return a boolean if a random
+        number is less that the probability.
+        """
+        return random.random() <= tragedy_probability
+
+
+
 ###############################################################################
 
 
 """
 # TODO make allowances for closeted
-# TODO this doesn't actually allow straight trans people, needs a re-think
+
 do this for all percentages, load from config
 import json
 
@@ -53,7 +66,8 @@ class Person:
         self.age = 0
         self.birth_year = birth_year
         self.death_year = None
-        self.fertility_modifier = self.generate_weighted_float()
+        self.age_at_death = None
+        self.fertility_modifier = Helpers.generate_weighted_float()
         self.pregnant = False
         self.children = []
         self.spouses = []
@@ -144,6 +158,37 @@ class Person:
         return self.gender_identity != "cis" or self.attraction != "straight"
 
 
+    ###########################################################################
+
+
+    def check_marriage(self, marriage_config) -> None:
+        """!
+        @brief Check config and marry 'em off.
+        """
+        #
+        average_marriage_age = marriage_config["average_marriage_age"]
+        # Extend the min and max
+        marriage_tail = marriage_config["marriage_tail"]
+        marriage_modifier = marriage_config["marriage_modifier"]
+        max_spouses = marriage_config["max_spouses"]
+
+        # Check current spouse number
+        if len(self.spouses) >= max_spouses:
+            return
+
+        # Dynamically generate a marriage age
+        age_check = Helpers.generate_weighted_float(
+            average_marriage_age - marriage_tail,
+            average_marriage_age + marriage_tail,
+            average_marriage_age
+        )
+        print(age_check)
+        if age_check <= self.age:
+            # too young, try next year
+            return
+
+
+
 # End of Person
 ###############################################################################
 
@@ -185,10 +230,21 @@ def main():
     app_config = load_json_data(path_to_app_config)
 
     # Load some defaults
-    is_btr = app_config["is_btr"]
-    generation_start_year = app_config["generation_start_year"]
-    generation_end_year = app_config["generation_end_year"]
-    year_steps = app_config["year_steps"]
+    # TODO Organize the config into sub-maps
+    time_config = app_config["time_config"]
+    is_btr = time_config["is_btr"]
+    generation_start_year = time_config["generation_start_year"]
+    generation_end_year = time_config["generation_end_year"]
+    year_steps = time_config["year_steps"]
+
+    # Marriage
+    marriage_confg = app_config["marriage_config"]
+
+    # Death
+    death_confg = app_config["death_config"]
+    average_death_age = death_confg["average_death_age"]
+    death_tail = death_confg["death_tail"]
+    tragedy_probability = death_confg["tragedy_probability"]
 
     # Check for invalid BTR range: End year cannot be greater than start year in BTR
     if is_btr and abs(generation_end_year) > abs(generation_start_year):
@@ -202,22 +258,47 @@ def main():
     living_people = []
     dead_people = []
 
-    # living_people.append(Person(current_year))
+    # The first person
+    living_people.append(Person(current_year))
 
+    # Run through each year
     while current_year is not None:
-        # print(f"Simulating year: {current_year}")
+        print(f"Simulating year: {current_year}")
 
-        p = Person(current_year)
-        if p.gender_identity.startswith("trans woman"):
-            living_people.append(p)
+        # Check each living person
+        for person in living_people[:]:
 
-        current_year = update_year(
-            current_year, year_steps, is_btr, generation_end_year
-        )
+            # Tragedy?
+            if Helpers.tragedy_strikes(tragedy_probability):
+                living_people.remove(person)
+                person.death_year = current_year
+                person.age_at_death = abs(person.death_year - person.birth_year)
+                dead_people.append(person)
+                continue
+
+            # Normal Death?
+
+            # Age up
+            person.age += 1
+
+            # Marriage?
+            person.check_marriage(marriage_confg)
+
+            # Gets pregnant?
+
+
+            # New baby?
+            if person.pregnant:
+                living_people.append(Person(current_year))
+                person.pregnant = False
 
     for person in living_people:
         for attr, value in vars(person).items():
             print(f"{attr}: {value}")
+
+
+# End of main()
+###########################################################################
 
 
 if __name__ == "__main__":
