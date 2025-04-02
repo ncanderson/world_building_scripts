@@ -48,6 +48,7 @@ class Person:
         # Generate the gender identity
         self.gender_identity = self.identity()
         self.determine_attraction()
+        self.queer = self.is_queer()
 
 
     ###########################################################################
@@ -106,8 +107,8 @@ class Person:
             self.attraction_to_can_bear = self.can_sire_children
             self.attraction_to_can_sire = self.can_bear_children
         elif self.attraction == "gay":
-            self.attraction_to_can_bear = self.can_sire_children
-            self.attraction_to_can_sire = self.can_bear_children
+            self.attraction_to_can_bear = self.can_bear_children
+            self.attraction_to_can_sire = self.can_sire_children
 
         # If trans, invert
         if self.gender_identity.startswith("trans"):
@@ -210,13 +211,14 @@ def main():
     living_people = []
     dead_people = []
 
-    living_people.append(Person(current_year))
+    #living_people.append(Person(current_year))
 
     while current_year is not None:
         print(f"Simulating year: {current_year}")
 
-
-
+        p = Person(current_year)
+        if p.gender_identity.startswith("trans"):
+            living_people.append(p)
 
         current_year = update_year(current_year, year_steps, is_btr, generation_end_year)
 
