@@ -1,0 +1,22 @@
+{
+    "time_config": {
+        "is_btr": "True",
+        "generation_start_year": 2000,
+        "generation_end_year": 1800,
+        "year_steps": 1
+    },
+    "marriage_config": {
+        "average_marriage_age": 18,
+        "marriage_low_tail": 5,
+        "marriage_high_tail": 5,
+        "marriage_std_deviation": 2.5,
+        "marriage_chance": 0.5,
+        "max_spouses": 3,
+        "marriage_respects_queerness": "True"
+    },
+    "death_config": {
+        "average_death_age": 70,
+        "death_tail": 20,
+        "tragedy_probability": 0.01
+    }
+}
