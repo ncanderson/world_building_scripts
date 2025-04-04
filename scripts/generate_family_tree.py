@@ -433,10 +433,9 @@ class Person:
         if random.random() <= marriage_chance:
             # Use random age we generate earlier
             # TODO Make this work with BTR/TR
-            self.spouses.append(self.create_new_spouse(
-                current_year + age_check,
-                marriage_respects_queerness)
-            )
+            new_spouse = self.create_new_spouse(current_year + age_check, marriage_respects_queerness)
+            self.spouses.append(new_spouse)
+            new_spouse.spouses.append(self)
 
 
     ###########################################################################
