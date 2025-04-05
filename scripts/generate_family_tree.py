@@ -2,6 +2,7 @@
 
 import random
 import json
+import uuid
 from enum import Enum
 
 # TODO Make this work with BTR/TR. probably start at zero, then use abs(negative numbers)
@@ -65,22 +66,22 @@ print(p1.name)  # Output: Unknown
 class Person:
 
     class PrimaryAttraction(Enum):
-        GENDER = "gender",
+        GENDER = "gender"
         REPRO = "repro"
 
     class Orientation(Enum):
-        STRAIGHT = "straight",
-        GAY = "gay",
-        BI = "bi",
+        STRAIGHT = "straight"
+        GAY = "gay"
+        BI = "bi"
         ACE = "ace"
 
     class GenderExpression(Enum):
-        MAN = "man",
-        WOMAN = "woman",
+        MAN = "man"
+        WOMAN = "woman"
         NONBINARY = "nonbinary"
 
     class GenderAlignment(Enum):
-        CIS = "cis",
+        CIS = "cis"
         TRANS = "trans"
 
     def __init__(self, birth_year):
@@ -133,8 +134,8 @@ class Person:
             "death_age": self.death_age,
             "fertility_modifier": self.fertility_modifier,
             "pregnant": self.pregnant,
-            "children": [child.to_dict() for child in self.children],
-            "spouses": [spouse.to_dict() for spouse in self.spouses],
+            "children": [child for child in self.children],
+            "spouses": [spouse for spouse in self.spouses],
             "gab": self.gab.value,
             "can_bear_children": self.can_bear_children,
             "can_sire_children": self.can_sire_children,
@@ -433,7 +434,7 @@ class Person:
 
     ###########################################################################
 
-    def check_marriage(self, marriage_config, current_year):
+    def check_marriage(self, marriage_config, current_year, living_people):
         """!
         @brief Check config and marry 'em off.
         @details This only supports one spouse per year
@@ -450,8 +451,8 @@ class Person:
 
         # Check current living spouse number
         spouse_count = 0
-        for spouse in self.spouses:
-            if spouse is not None and spouse.death_age is None:
+        for spouse_id in self.spouses:
+            if spouse_id is not None and living_people[spouse_id].death_age is None:
                 spouse_count += 1
 
         if spouse_count >= max_spouses:
@@ -477,8 +478,9 @@ class Person:
             new_spouse = self.create_new_spouse(
                 current_year + age_check, marriage_respects_queerness
             )
-            self.spouses.append(new_spouse)
-            new_spouse.spouses.append(self)
+
+            self.spouses.append(new_spouse.id)
+            new_spouse.spouses.append(new_spouse.id)
             return new_spouse
 
     ###########################################################################
@@ -599,38 +601,36 @@ def main():
     # Run Loop
 
     current_year = generation_start_year
-    living_people = []
-    dead_people = []
+    living_people = {}
 
     # The first person
-    living_people.append(Person(current_year))
+    the_first = Person(current_year)
+    living_people[the_first.id] = the_first
 
     # Run through each year
     while current_year is not None:
         print(f"Simulating year: {current_year}")
         print(f"living_people: {len(living_people)}")
-        print(f"dead_people: {len(dead_people)}")
+
+        new_people = {}
 
         # Check each living person
-        for person in living_people[:]:
+        for person in living_people.values():
 
             # Tragedy?
             if Helpers.tragedy_strikes(tragedy_probability):
-                living_people.remove(person)
                 person.death_year = current_year
                 person.age_at_death = abs(person.death_year - person.birth_year)
-                dead_people.append(person)
                 continue
 
             # Normal Death?
-            if person.you_have_died(death_config, current_year):
-                dead_people.append(living_people.pop())
+            person.you_have_died(death_config, current_year)
 
             # Marriage?
-            new_spouse = person.check_marriage(marriage_confg, current_year)
+            new_spouse = person.check_marriage(marriage_confg, current_year, living_people)
 
             if new_spouse is not None:
-                living_people.append(new_spouse)
+                new_people[new_spouse.id] = new_spouse
 
             # Gets pregnant?
 
@@ -638,11 +638,15 @@ def main():
 
             # New baby?
             if person.pregnant:
-                living_people.append(Person(current_year))
+                bebe = Person(current_year)
+                new_people[bebe.id] = bebe
                 person.pregnant = False
 
             # Age up
             person.age += 1
+
+        # Slop the new people into the dict
+        living_people = new_people | living_people
 
         # Update year, ensure we can exit the while loop
         current_year = update_year(
@@ -651,11 +655,8 @@ def main():
 
     # End of main loop
 
-    json_living = json.dumps([p.to_dict() for p in living_people], indent=4)
+    json_living = json.dumps([p.to_dict() for p in living_people.values()], indent=4)
     print(json_living)
-
-    json_dead = json.dumps([p.to_dict() for p in dead_people], indent=4)
-    print(json_dead)
 
     # for person in living_people:
     #     for attr, value in vars(person).items():
