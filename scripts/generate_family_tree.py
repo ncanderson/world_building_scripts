@@ -114,8 +114,6 @@ class Person:
 
         # Generate the gender identity
         self.gender_expression = self.get_gender_expression()
-        if self.gender_expression is None:
-            print("ctor NONE")
 
         # Generate gender alignment
         self.gender_alignment = self.set_gender_alignment()
@@ -137,9 +135,11 @@ class Person:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
                     spouse.gender_expression = Person.binary_swap(self.gab)
                 else:
-                    spouse.gender_expression = Person.binary_swap(self.gender_expression) # <===============================================================================================
+                    for attr, value in vars(self).items():
+                        print(f"{attr}: {value}")
+                    spouse.gender_expression = Person.binary_swap(self.gab)
             elif self.orientation == Person.Orientation.GAY:
-                spouse.gender_expression = self.gender_expression
+                spouse.gender_expression = self.gab
             elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
                 spouse.gender_expression = Person.equal_chance(Person.GenderExpression.WOMAN,
                                                                Person.GenderExpression.MAN)
@@ -149,7 +149,10 @@ class Person:
             if spouse_identity_prefix == Person.GenderAlignment.CIS:
                 spouse.gab = spouse.gender_expression
             elif spouse_identity_prefix == Person.GenderAlignment.TRANS:
-                spouse.gab = Person.binary_swap(spouse.gender_expression) # <===============================================================================================
+                if spouse.gender_expression == Person.GenderExpression.NONBINARY:
+                    spouse.gab = Person.binary_swap(spouse.gab)
+                else:
+                    spouse.gab = Person.binary_swap(spouse.gender_expression)
 
             # Spouse reproduction abilities, which is less important since I am attracted to gender
             spouse.init_repro(spouse.gab)
@@ -171,14 +174,15 @@ class Person:
         # I am primarily attracted to a person's equipment
         elif self.primary_attraction == Person.PrimaryAttraction.REPRO:
 
-            # This breaks if the 'source' person is nonbinary
             if self.orientation == Person.Orientation.STRAIGHT:
+                spouse.gab = Person.binary_swap(self.gab)
+
+            elif self.orientation == Person.Orientation.GAY:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
                     spouse.gab = Person.binary_swap(self.gab)
                 else:
-                    spouse.gab = Person.binary_swap(self.gab) # <===============================================================================================
-            elif self.orientation == Person.Orientation.GAY:
-                spouse.gab = self.gender_expression
+                    spouse.gab = Person.binary_swap(self.gender_expression)
+
             elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
                 spouse.gab = Person.equal_chance(Person.GenderExpression.WOMAN,
                                                  Person.GenderExpression.MAN)
@@ -192,8 +196,10 @@ class Person:
 
             # Don't really care, I am attracted to equipment
             spouse.gender_expression = spouse.get_gender_expression()
-            if spouse.gender_expression is None:
-                print("spouse G E NONE")
+            # if spouse.gender_expression is None:
+                # print("spouse G E NONE")
+                # for attr, value in vars(spouse).items():
+                #     print(f"{attr}: {value}")
 
             # Spouse orientation
             # First check for bi or ace, as those will override gay/straight
