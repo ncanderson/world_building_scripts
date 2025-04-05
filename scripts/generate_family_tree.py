@@ -114,27 +114,19 @@ class Person:
 
         # Generate the gender identity
         self.gender_expression = self.get_gender_expression()
+        if self.gender_expression is None:
+            print("ctor NONE")
+
+        # Generate gender alignment
+        self.gender_alignment = self.set_gender_alignment()
 
         # Check queerness
         self.queer = self.is_queer()
 
 
-    """
-    we need to assign:
-        gab                   X
-        orientation           _
-        primary_attraction    X
-        gender_expression     _
-        repro bools           X
+    ###########################################################################
 
-    if attr = repro
-        - repro
-        - identity
-            - gab
-        - orientation
-        - attraction
-
-    """
+    # 138, 150, 177 is where we're having issues
     def create_compat_spouse(self, spouse):
 
         # I am primarily attracted to a person's gender
@@ -145,7 +137,7 @@ class Person:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
                     spouse.gender_expression = Person.binary_swap(self.gab)
                 else:
-                    spouse.gender_expression = Person.binary_swap(self.gender_expression)
+                    spouse.gender_expression = Person.binary_swap(self.gender_expression) # <===============================================================================================
             elif self.orientation == Person.Orientation.GAY:
                 spouse.gender_expression = self.gender_expression
             elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
@@ -157,7 +149,7 @@ class Person:
             if spouse_identity_prefix == Person.GenderAlignment.CIS:
                 spouse.gab = spouse.gender_expression
             elif spouse_identity_prefix == Person.GenderAlignment.TRANS:
-                spouse.gab = Person.binary_swap(spouse.gender_expression)
+                spouse.gab = Person.binary_swap(spouse.gender_expression) # <===============================================================================================
 
             # Spouse reproduction abilities, which is less important since I am attracted to gender
             spouse.init_repro(spouse.gab)
@@ -176,11 +168,6 @@ class Person:
                     spouse.orientation = Person.Orientation.GAY
                 else: spouse.orientation = Person.Orientation.STRAIGHT
 
-            # Finally, make a roll to see if their ident is actually NB. This means that we're
-            # assuming attraction based on binary expression, but that there is always the
-            # chance that this person is actually nonbinary.
-            spouse.am_i_enby()
-
         # I am primarily attracted to a person's equipment
         elif self.primary_attraction == Person.PrimaryAttraction.REPRO:
 
@@ -189,7 +176,7 @@ class Person:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
                     spouse.gab = Person.binary_swap(self.gab)
                 else:
-                    spouse.gab = Person.binary_swap(self.gab)
+                    spouse.gab = Person.binary_swap(self.gab) # <===============================================================================================
             elif self.orientation == Person.Orientation.GAY:
                 spouse.gab = self.gender_expression
             elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
@@ -205,6 +192,8 @@ class Person:
 
             # Don't really care, I am attracted to equipment
             spouse.gender_expression = spouse.get_gender_expression()
+            if spouse.gender_expression is None:
+                print("spouse G E NONE")
 
             # Spouse orientation
             # First check for bi or ace, as those will override gay/straight
@@ -215,6 +204,13 @@ class Person:
                 if spouse.gender_expression == self.gender_expression:
                     spouse.orientation = Person.Orientation.GAY
                 else: spouse.orientation = Person.Orientation.STRAIGHT
+
+        # Finally, make a roll to see if their ident is actually NB. This means that we're
+        # assuming attraction based on binary expression, but that there is always the
+        # chance that this person is actually nonbinary.
+        spouse.am_i_enby()
+        # Set gender alignment based on all that nonsense
+        spouse.set_gender_alignment()
 
 
     ###########################################################################
@@ -329,6 +325,21 @@ class Person:
     ###########################################################################
 
 
+    def set_gender_alignment(self):
+
+        if self.gender_expression == Person.GenderExpression.NONBINARY:
+            return Person.GenderExpression.NONBINARY
+        elif self.gender_expression == self.gab:
+            return Person.GenderAlignment.CIS
+        elif self.gender_expression != self.gab:
+            return Person.GenderAlignment.TRANS
+        else:
+            return None
+
+
+    ###########################################################################
+
+
     def init_repro(self, gab, infert_probability=0.05):
         """!
         @brief Randomly decide whether both can bear or sire children are False (5% chance)
@@ -434,8 +445,13 @@ class Person:
             # Use random age we generate earlier
             # TODO Make this work with BTR/TR
             new_spouse = self.create_new_spouse(current_year + age_check, marriage_respects_queerness)
+            if new_spouse is None:
+                print(new_spouse)
+                print("created as none")
+
             self.spouses.append(new_spouse)
             new_spouse.spouses.append(self)
+            return new_spouse
 
 
     ###########################################################################
@@ -458,6 +474,8 @@ class Person:
         else:
             self.create_compat_spouse(spouse)
 
+        if spouse is None:
+            print("create_new_spouse is None")
         return spouse
 
 
@@ -535,10 +553,14 @@ def main():
 
     # Run through each year
     while current_year is not None:
-        #print(f"Simulating year: {current_year}")
+        # print(f"Simulating year: {current_year}")
+        # print(f"living_people: {len(living_people)}")
+        # print(f"dead_people: {len(dead_people)}")
 
         # Check each living person
         for person in living_people[:]:
+
+            # print(person.spouses)
 
             # Tragedy?
             if Helpers.tragedy_strikes(tragedy_probability):
@@ -548,13 +570,14 @@ def main():
                 dead_people.append(person)
                 continue
 
+
             # Normal Death?
 
-            # Age up
-            person.age += 1
-
             # Marriage?
-            person.check_marriage(marriage_confg, current_year)
+            new_spouse = person.check_marriage(marriage_confg, current_year)
+
+            if new_spouse is not None:
+                living_people.append(new_spouse)
 
             # Gets pregnant?
             # check for infertile
@@ -564,18 +587,21 @@ def main():
                 living_people.append(Person(current_year))
                 person.pregnant = False
 
+            # Age up
+            person.age += 1
+
         # Update year, ensure we can exit the while loop
         current_year = update_year(current_year, year_steps, is_btr, generation_end_year)
-        print(len(living_people))
 
-    print(len(living_people))
-    #for person in living_people:
-    #    for attr, value in vars(person).items():
-    #        #print(f"{attr}: {value}")
-    #        #print("======================================================")
-    #        for spouse in person.spouses:
-    #            for attr, value in vars(person).items():
-    #                print(f"{attr}: {value}")
+    # End of main loop
+
+    for person in living_people:
+        for attr, value in vars(person).items():
+            print(f"{attr}: {value}")
+            #print("======================================================")
+            #for spouse in person.spouses:
+            #    for attr, value in vars(person).items():
+            #        print(f"{attr}: {value}")
 
 # End of main()
 ###########################################################################
