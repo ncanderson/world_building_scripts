@@ -21,9 +21,7 @@ class Helpers:
         """
         return max(min_val, min(max_val, random.gauss(mu=mean, sigma=std_deviation)))
 
-
     ###########################################################################
-
 
     @staticmethod
     def tragedy_strikes(tragedy_probability) -> bool:
@@ -67,25 +65,27 @@ print(p1.name)  # Output: Unknown
 class Person:
 
     class PrimaryAttraction(Enum):
-        GENDER = 'gender',
-        REPRO = 'repro'
+        GENDER = "gender",
+        REPRO = "repro"
 
     class Orientation(Enum):
-        STRAIGHT = 'straight',
-        GAY = 'gay',
-        BI = 'bi',
-        ACE = 'ace'
+        STRAIGHT = "straight",
+        GAY = "gay",
+        BI = "bi",
+        ACE = "ace"
 
     class GenderExpression(Enum):
-        MAN = 'man',
-        WOMAN = 'woman',
-        NONBINARY ='nonbinary'
+        MAN = "man",
+        WOMAN = "woman",
+        NONBINARY = "nonbinary"
 
     class GenderAlignment(Enum):
-        CIS = 'cis',
-        TRANS = 'trans'
+        CIS = "cis",
+        TRANS = "trans"
 
     def __init__(self, birth_year):
+
+        self.id = str(uuid.uuid4())
         self.age = 0
         self.birth_year = birth_year
         self.death_year = None
@@ -96,8 +96,9 @@ class Person:
         self.spouses = []
 
         # Gender assigned at birth, 50/50 chance
-        self.gab = Person.equal_chance(Person.GenderExpression.MAN,
-                                       Person.GenderExpression.WOMAN)
+        self.gab = Person.equal_chance(
+            Person.GenderExpression.MAN, Person.GenderExpression.WOMAN
+        )
 
         # Reproduction abilities
         self.can_bear_children = None
@@ -109,8 +110,9 @@ class Person:
         self.orientation = Person.get_orientation()
 
         # Generate attraction
-        self.primary_attraction = Person.equal_chance(Person.PrimaryAttraction.GENDER,
-                                                      Person.PrimaryAttraction.REPRO)
+        self.primary_attraction = Person.equal_chance(
+            Person.PrimaryAttraction.GENDER, Person.PrimaryAttraction.REPRO
+        )
 
         # Generate the gender identity
         self.gender_expression = self.get_gender_expression()
@@ -121,10 +123,31 @@ class Person:
         # Check queerness
         self.queer = self.is_queer()
 
+    ###########################################################################
+
+    def to_dict(self):
+        return {
+            "age": self.age,
+            "birth_year": self.birth_year,
+            "death_year": self.death_year,
+            "death_age": self.death_age,
+            "fertility_modifier": self.fertility_modifier,
+            "pregnant": self.pregnant,
+            "children": [child.to_dict() for child in self.children],
+            "spouses": [spouse.to_dict() for spouse in self.spouses],
+            "gab": self.gab.value,
+            "can_bear_children": self.can_bear_children,
+            "can_sire_children": self.can_sire_children,
+            "infertile": self.infertile,
+            "orientation": self.orientation.value,
+            "primary_attraction": self.primary_attraction.value,
+            "gender_expression": self.gender_expression.value,
+            "gender_alignment": self.gender_alignment.value,
+            "queer": self.queer,
+        }
 
     ###########################################################################
 
-    # 138, 150, 177 is where we're having issues
     def create_compat_spouse(self, spouse):
 
         # I am primarily attracted to a person's gender
@@ -135,14 +158,16 @@ class Person:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
                     spouse.gender_expression = Person.binary_swap(self.gab)
                 else:
-                    for attr, value in vars(self).items():
-                        print(f"{attr}: {value}")
                     spouse.gender_expression = Person.binary_swap(self.gab)
             elif self.orientation == Person.Orientation.GAY:
                 spouse.gender_expression = self.gab
-            elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
-                spouse.gender_expression = Person.equal_chance(Person.GenderExpression.WOMAN,
-                                                               Person.GenderExpression.MAN)
+            elif (
+                self.orientation == Person.Orientation.BI
+                or self.orientation == Person.Orientation.ACE
+            ):
+                spouse.gender_expression = Person.equal_chance(
+                    Person.GenderExpression.WOMAN, Person.GenderExpression.MAN
+                )
 
             # Spouse gender alignment, which is less important since I am attracted to gender
             spouse_identity_prefix = Person.get_gender_alignment()
@@ -158,18 +183,23 @@ class Person:
             spouse.init_repro(spouse.gab)
 
             # Spouse primary attraction
-            spouse.primary_attraction = Person.equal_chance(Person.PrimaryAttraction.GENDER,
-                                                            Person.PrimaryAttraction.REPRO)
+            spouse.primary_attraction = Person.equal_chance(
+                Person.PrimaryAttraction.GENDER, Person.PrimaryAttraction.REPRO
+            )
 
             # Spouse orientation
             # First check for bi or ace, as those will override gay/straight
             temp_orientation = Person.get_orientation()
-            if temp_orientation == Person.Orientation.BI or temp_orientation == Person.Orientation.ACE:
+            if (
+                temp_orientation == Person.Orientation.BI
+                or temp_orientation == Person.Orientation.ACE
+            ):
                 spouse.orientation = temp_orientation
             else:
                 if spouse.gender_expression == self.gender_expression:
                     spouse.orientation = Person.Orientation.GAY
-                else: spouse.orientation = Person.Orientation.STRAIGHT
+                else:
+                    spouse.orientation = Person.Orientation.STRAIGHT
 
         # I am primarily attracted to a person's equipment
         elif self.primary_attraction == Person.PrimaryAttraction.REPRO:
@@ -183,33 +213,38 @@ class Person:
                 else:
                     spouse.gab = Person.binary_swap(self.gender_expression)
 
-            elif self.orientation == Person.Orientation.BI or self.orientation == Person.Orientation.ACE:
-                spouse.gab = Person.equal_chance(Person.GenderExpression.WOMAN,
-                                                 Person.GenderExpression.MAN)
+            elif (
+                self.orientation == Person.Orientation.BI
+                or self.orientation == Person.Orientation.ACE
+            ):
+                spouse.gab = Person.equal_chance(
+                    Person.GenderExpression.WOMAN, Person.GenderExpression.MAN
+                )
 
             # Spouse reproduction abilities
             spouse.init_repro(spouse.gab)
 
             # Spouse primary attraction
-            spouse.primary_attraction = Person.equal_chance(Person.PrimaryAttraction.GENDER,
-                                                            Person.PrimaryAttraction.REPRO)
+            spouse.primary_attraction = Person.equal_chance(
+                Person.PrimaryAttraction.GENDER, Person.PrimaryAttraction.REPRO
+            )
 
             # Don't really care, I am attracted to equipment
             spouse.gender_expression = spouse.get_gender_expression()
-            # if spouse.gender_expression is None:
-                # print("spouse G E NONE")
-                # for attr, value in vars(spouse).items():
-                #     print(f"{attr}: {value}")
 
             # Spouse orientation
             # First check for bi or ace, as those will override gay/straight
             temp_orientation = Person.get_orientation()
-            if temp_orientation == Person.Orientation.BI or temp_orientation == Person.Orientation.ACE:
+            if (
+                temp_orientation == Person.Orientation.BI
+                or temp_orientation == Person.Orientation.ACE
+            ):
                 spouse.orientation = temp_orientation
             else:
                 if spouse.gender_expression == self.gender_expression:
                     spouse.orientation = Person.Orientation.GAY
-                else: spouse.orientation = Person.Orientation.STRAIGHT
+                else:
+                    spouse.orientation = Person.Orientation.STRAIGHT
 
         # Finally, make a roll to see if their ident is actually NB. This means that we're
         # assuming attraction based on binary expression, but that there is always the
@@ -218,9 +253,7 @@ class Person:
         # Set gender alignment based on all that nonsense
         spouse.set_gender_alignment()
 
-
     ###########################################################################
-
 
     @staticmethod
     def equal_chance(first_arg, second_arg):
@@ -229,9 +262,7 @@ class Person:
         """
         return first_arg if random.random() < 0.5 else second_arg
 
-
     ###########################################################################
-
 
     @staticmethod
     def get_orientation() -> str:
@@ -242,14 +273,14 @@ class Person:
             Person.Orientation.STRAIGHT: 0.8,
             Person.Orientation.GAY: 0.08,
             Person.Orientation.BI: 0.08,
-            Person.Orientation.ACE: 0.04
+            Person.Orientation.ACE: 0.04,
         }
 
-        return random.choices(list(attraction_weights.keys()), weights=attraction_weights.values(), k=1)[0]
-
+        return random.choices(
+            list(attraction_weights.keys()), weights=attraction_weights.values(), k=1
+        )[0]
 
     ###########################################################################
-
 
     @staticmethod
     def get_gender_alignment() -> str:
@@ -258,35 +289,36 @@ class Person:
         """
         ident_chance = {
             Person.GenderAlignment.CIS: 0.8,
-            Person.GenderAlignment.TRANS: 0.2
+            Person.GenderAlignment.TRANS: 0.2,
         }
 
         return random.choices(
             list(ident_chance.keys()), weights=ident_chance.values(), k=1
         )[0]
 
-
     ###########################################################################
-
 
     @staticmethod
     def binary_swap(expression):
         """!
         @brief Help function to return man/woman binary opposite
         """
-        allowed_expression = [Person.GenderExpression.MAN, Person.GenderExpression.WOMAN]
+        allowed_expression = [
+            Person.GenderExpression.MAN,
+            Person.GenderExpression.WOMAN,
+        ]
         # Raise error if this is being used wrong
         if expression not in allowed_expression:
-            raise ValueError(f"Invalid argument: {expression}. Allowed: {allowed_expression}")
+            raise ValueError(
+                f"Invalid argument: {expression}. Allowed: {allowed_expression}"
+            )
 
         if expression == Person.GenderExpression.MAN:
             return Person.GenderExpression.WOMAN
         if expression == Person.GenderExpression.WOMAN:
             return Person.GenderExpression.MAN
 
-
     ###########################################################################
-
 
     def am_i_enby(self, enby_probability=0.1):
         """!
@@ -297,11 +329,10 @@ class Person:
         if random.random() < enby_probability:
             self.gender_expression = Person.GenderExpression.NONBINARY
             return True
-        else: return False
-
+        else:
+            return False
 
     ###########################################################################
-
 
     def get_gender_expression(self, ident_prefix=None) -> str:
         """
@@ -327,9 +358,7 @@ class Person:
             elif self.gab == Person.GenderExpression.WOMAN:
                 return Person.GenderExpression.MAN
 
-
     ###########################################################################
-
 
     def set_gender_alignment(self):
 
@@ -342,9 +371,7 @@ class Person:
         else:
             return None
 
-
     ###########################################################################
-
 
     def init_repro(self, gab, infert_probability=0.05):
         """!
@@ -363,9 +390,7 @@ class Person:
             self.can_sire_children = False
         # todo intersex people
 
-
     ###########################################################################
-
 
     def determine_attraction(self) -> None:
         """!
@@ -397,17 +422,16 @@ class Person:
 
         return
 
-
     ###########################################################################
-
 
     def is_queer(self, probability=0.1):
         """Returns True with a given probability."""
-        return self.gender_expression != self.gab or self.orientation != Person.Orientation.STRAIGHT
-
+        return (
+            self.gender_expression != self.gab
+            or self.orientation != Person.Orientation.STRAIGHT
+        )
 
     ###########################################################################
-
 
     def check_marriage(self, marriage_config, current_year):
         """!
@@ -438,7 +462,7 @@ class Person:
             average_marriage_age - marriage_low_tail,
             average_marriage_age + marriage_high_tail,
             average_marriage_age,
-            marriage_std_deviation
+            marriage_std_deviation,
         )
         if age_check <= self.age:
             # too young, try next year
@@ -450,18 +474,14 @@ class Person:
         if random.random() <= marriage_chance:
             # Use random age we generate earlier
             # TODO Make this work with BTR/TR
-            new_spouse = self.create_new_spouse(current_year + age_check, marriage_respects_queerness)
-            if new_spouse is None:
-                print(new_spouse)
-                print("created as none")
-
+            new_spouse = self.create_new_spouse(
+                current_year + age_check, marriage_respects_queerness
+            )
             self.spouses.append(new_spouse)
             new_spouse.spouses.append(self)
             return new_spouse
 
-
     ###########################################################################
-
 
     def create_new_spouse(self, birth_year, marriage_respects_queerness):
         """!
@@ -472,7 +492,11 @@ class Person:
         # ie I'm the king/queen and I don't give a fuck who you say you are
         # you're going to carry on my family name
         if not marriage_respects_queerness:
-            spouse.gab = Person.GenderExpression.MAN if self.gab == Person.GenderExpression.WOMAN else Person.GenderExpression.MAN
+            spouse.gab = (
+                Person.GenderExpression.MAN
+                if self.gab == Person.GenderExpression.WOMAN
+                else Person.GenderExpression.MAN
+            )
             spouse.init_repro()
             spouse.gender_identity = spouse.identity()
             spouse.determine_attraction()
@@ -480,9 +504,33 @@ class Person:
         else:
             self.create_compat_spouse(spouse)
 
-        if spouse is None:
-            print("create_new_spouse is None")
         return spouse
+
+    ###########################################################################
+
+    def you_have_died(self, death_config, current_year):
+        """!
+        @brief
+        """
+        average_death_age = death_config["average_death_age"]
+        death_tail = death_config["death_tail"]
+        death_std_deviation = death_config["death_std_deviation"]
+
+        death_check = Helpers.generate_weighted_float(
+            average_death_age - death_tail,
+            average_death_age + death_tail,
+            average_death_age,
+            death_std_deviation,
+        )
+
+        if self.age >= death_check:
+            self.death_year = current_year
+            self.death_age = self.age
+            return True
+        else:
+            return False
+
+    ###########################################################################
 
 
 # End of Person
@@ -537,10 +585,10 @@ def main():
     marriage_confg = app_config["marriage_config"]
 
     # Death
-    death_confg = app_config["death_config"]
-    average_death_age = death_confg["average_death_age"]
-    death_tail = death_confg["death_tail"]
-    tragedy_probability = death_confg["tragedy_probability"]
+    death_config = app_config["death_config"]
+    average_death_age = death_config["average_death_age"]
+    death_tail = death_config["death_tail"]
+    tragedy_probability = death_config["tragedy_probability"]
 
     # Check for invalid BTR range: End year cannot be greater than start year in BTR
     if is_btr and abs(generation_end_year) > abs(generation_start_year):
@@ -559,14 +607,12 @@ def main():
 
     # Run through each year
     while current_year is not None:
-        # print(f"Simulating year: {current_year}")
-        # print(f"living_people: {len(living_people)}")
-        # print(f"dead_people: {len(dead_people)}")
+        print(f"Simulating year: {current_year}")
+        print(f"living_people: {len(living_people)}")
+        print(f"dead_people: {len(dead_people)}")
 
         # Check each living person
         for person in living_people[:]:
-
-            # print(person.spouses)
 
             # Tragedy?
             if Helpers.tragedy_strikes(tragedy_probability):
@@ -576,8 +622,9 @@ def main():
                 dead_people.append(person)
                 continue
 
-
             # Normal Death?
+            if person.you_have_died(death_config, current_year):
+                dead_people.append(living_people.pop())
 
             # Marriage?
             new_spouse = person.check_marriage(marriage_confg, current_year)
@@ -586,6 +633,7 @@ def main():
                 living_people.append(new_spouse)
 
             # Gets pregnant?
+
             # check for infertile
 
             # New baby?
@@ -597,17 +645,26 @@ def main():
             person.age += 1
 
         # Update year, ensure we can exit the while loop
-        current_year = update_year(current_year, year_steps, is_btr, generation_end_year)
+        current_year = update_year(
+            current_year, year_steps, is_btr, generation_end_year
+        )
 
     # End of main loop
 
-    for person in living_people:
-        for attr, value in vars(person).items():
-            print(f"{attr}: {value}")
-            #print("======================================================")
-            #for spouse in person.spouses:
-            #    for attr, value in vars(person).items():
-            #        print(f"{attr}: {value}")
+    json_living = json.dumps([p.to_dict() for p in living_people], indent=4)
+    print(json_living)
+
+    json_dead = json.dumps([p.to_dict() for p in dead_people], indent=4)
+    print(json_dead)
+
+    # for person in living_people:
+    #     for attr, value in vars(person).items():
+    #         print(f"{attr}: {value}")
+    # print("======================================================")
+    # for spouse in person.spouses:
+    #    for attr, value in vars(person).items():
+    #        print(f"{attr}: {value}")
+
 
 # End of main()
 ###########################################################################

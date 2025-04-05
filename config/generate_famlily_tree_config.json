@@ -10,13 +10,14 @@
         "marriage_low_tail": 5,
         "marriage_high_tail": 5,
         "marriage_std_deviation": 2.5,
-        "marriage_chance": 0.5,
-        "max_spouses": 3,
+        "marriage_chance": 0.25,
+        "max_spouses": 1,
         "marriage_respects_queerness": "True"
     },
     "death_config": {
         "average_death_age": 70,
         "death_tail": 20,
+        "death_std_deviation": 2.5,
         "tragedy_probability": 0.01
     }
 }
