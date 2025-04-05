@@ -87,6 +87,7 @@ class Person:
     def __init__(self, birth_year):
 
         self.id = str(uuid.uuid4())
+        self.created_as = None
         self.age = 0
         self.birth_year = birth_year
         self.death_year = None
@@ -128,6 +129,8 @@ class Person:
 
     def to_dict(self):
         return {
+            "id": self.id,
+            "created_as": self.created_as,
             "age": self.age,
             "birth_year": self.birth_year,
             "death_year": self.death_year,
@@ -206,7 +209,10 @@ class Person:
         elif self.primary_attraction == Person.PrimaryAttraction.REPRO:
 
             if self.orientation == Person.Orientation.STRAIGHT:
-                spouse.gab = Person.binary_swap(self.gab)
+                if self.gender_expression == Person.GenderExpression.NONBINARY:
+                    spouse.gab = Person.binary_swap(self.gab)
+                else:
+                    spouse.gab = Person.binary_swap(self.gender_expression)
 
             elif self.orientation == Person.Orientation.GAY:
                 if self.gender_expression == Person.GenderExpression.NONBINARY:
@@ -252,7 +258,7 @@ class Person:
         # chance that this person is actually nonbinary.
         spouse.am_i_enby()
         # Set gender alignment based on all that nonsense
-        spouse.set_gender_alignment()
+        spouse.gender_alignment = spouse.set_gender_alignment()
 
     ###########################################################################
 
@@ -480,7 +486,8 @@ class Person:
             )
 
             self.spouses.append(new_spouse.id)
-            new_spouse.spouses.append(new_spouse.id)
+            new_spouse.spouses.append(self.id)
+            new_spouse.created_as = "generated spouse"
             return new_spouse
 
     ###########################################################################
@@ -605,12 +612,13 @@ def main():
 
     # The first person
     the_first = Person(current_year)
+    the_first.created_as = "The First"
     living_people[the_first.id] = the_first
 
     # Run through each year
     while current_year is not None:
-        print(f"Simulating year: {current_year}")
-        print(f"living_people: {len(living_people)}")
+        # print(f"Simulating year: {current_year}")
+        # print(f"living_people: {len(living_people)}")
 
         new_people = {}
 
@@ -639,6 +647,7 @@ def main():
             # New baby?
             if person.pregnant:
                 bebe = Person(current_year)
+                bebe.created_as("bebe")
                 new_people[bebe.id] = bebe
                 person.pregnant = False
 
@@ -657,6 +666,7 @@ def main():
 
     json_living = json.dumps([p.to_dict() for p in living_people.values()], indent=4)
     print(json_living)
+
 
     # for person in living_people:
     #     for attr, value in vars(person).items():
