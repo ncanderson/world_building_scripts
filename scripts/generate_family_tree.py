@@ -532,7 +532,7 @@ class Person:
             death_std_deviation,
         )
 
-        if self.age >= death_check:
+        if self.death_age is None and self.age >= death_check:
             self.death_year = current_year
             self.death_age = self.age
             return True
@@ -623,7 +623,7 @@ def main():
         new_people = {}
 
         # Check each living person
-        for person in living_people.values():
+        for person in (p for p in living_people.values() if p.death_age is None):
 
             # Tragedy?
             if Helpers.tragedy_strikes(tragedy_probability):
@@ -635,7 +635,9 @@ def main():
             person.you_have_died(death_config, current_year)
 
             # Marriage?
-            new_spouse = person.check_marriage(marriage_confg, current_year, living_people)
+            new_spouse = person.check_marriage(
+                marriage_confg, current_year, living_people
+            )
 
             if new_spouse is not None:
                 new_people[new_spouse.id] = new_spouse
@@ -666,7 +668,6 @@ def main():
 
     json_living = json.dumps([p.to_dict() for p in living_people.values()], indent=4)
     print(json_living)
-
 
     # for person in living_people:
     #     for attr, value in vars(person).items():
