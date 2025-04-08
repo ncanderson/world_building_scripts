@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import random
+import math
 import json
 import uuid
 from enum import Enum
@@ -65,6 +66,18 @@ print(p1.name)  # Output: Unknown
 
 class Person:
 
+    DEFAULTS = {}
+
+    @classmethod
+    def load_defaults(cls, config_file):
+        """!
+        @brief Load any defaults needed by this class
+        """
+        with open(config_file, "r") as f:
+            cls.DEFAULTS = json.load(f)
+
+    ###########################################################################
+
     class PrimaryAttraction(Enum):
         GENDER = "gender"
         REPRO = "repro"
@@ -84,15 +97,22 @@ class Person:
         CIS = "cis"
         TRANS = "trans"
 
+    ###########################################################################
+
     def __init__(self, birth_year):
 
+        # The fertility modifer needs some defaults
+        self.__dict__.update(Person.DEFAULTS)
+
+        # Other attrs
         self.id = str(uuid.uuid4())
         self.created_as = None
         self.age = 0
         self.birth_year = birth_year
         self.death_year = None
         self.death_age = None
-        self.fertility_modifier = Helpers.generate_weighted_float()
+        self.cause_of_death = None
+        self.fertility_modifier = Helpers.generate_weighted_float(self.min_fert, self.max_fert, self.bebe_mean, self.bebe_std_deviation)
         self.pregnant = False
         self.children = []
         self.spouses = []
@@ -135,6 +155,7 @@ class Person:
             "birth_year": self.birth_year,
             "death_year": self.death_year,
             "death_age": self.death_age,
+            "cause_of_death": self.cause_of_death,
             "fertility_modifier": self.fertility_modifier,
             "pregnant": self.pregnant,
             "children": [child for child in self.children],
@@ -518,26 +539,35 @@ class Person:
     ###########################################################################
 
     def you_have_died(self, death_config, current_year):
-        """!
-        @brief
+        """
+        @brief Returns True if the person dies this year based on age.
+        @param age Current age
+        @param mid_age The age at which risk is ~50% of max_prob
+        @param steepness How sharply risk increases with age
+        @param max_prob The highest possible death chance per year (never reaches 100%)
         """
         average_death_age = death_config["average_death_age"]
-        death_tail = death_config["death_tail"]
-        death_std_deviation = death_config["death_std_deviation"]
+        death_chance_accel = death_config["death_chance_accel"]
+        max_death_chance = death_config["max_death_chance"]
 
-        death_check = Helpers.generate_weighted_float(
-            average_death_age - death_tail,
-            average_death_age + death_tail,
-            average_death_age,
-            death_std_deviation,
-        )
+        logistic = 1 / (1 + math.exp(-death_chance_accel * (self.age - average_death_age)))
+        death_chance = min(max_death_chance, logistic * max_death_chance)
+        print(death_chance)
+        return random.random() < death_chance
 
-        if self.death_age is None and self.age >= death_check:
-            self.death_year = current_year
-            self.death_age = self.age
-            return True
-        else:
-            return False
+    ###########################################################################
+
+    def you_are_pregnant(self, bebe_config):
+        """!
+        @brief Check for pregnancy. This will set the 'self' attr, but
+        also returns a boolean if that is relevant to anyone.
+        @returns True if person is pregnant
+        """
+        min_fert = bebe_config["min_fert"]
+        max_fert = bebe_config["max_fert"]
+        bebe_mean = bebe_config["bebe_mean"]
+        bebe_std_deviation = bebe_config["bebe_std_deviation"]
+
 
     ###########################################################################
 
@@ -593,11 +623,15 @@ def main():
     # Marriage
     marriage_confg = app_config["marriage_config"]
 
+    # Bebe
+    bebe_config = app_config["bebe"]
+
     # Death
     death_config = app_config["death_config"]
-    average_death_age = death_config["average_death_age"]
-    death_tail = death_config["death_tail"]
     tragedy_probability = death_config["tragedy_probability"]
+
+    # Set Person defaults
+    Person.load_defaults(bebe_config)
 
     # Check for invalid BTR range: End year cannot be greater than start year in BTR
     if is_btr and abs(generation_end_year) > abs(generation_start_year):
@@ -629,22 +663,21 @@ def main():
             if Helpers.tragedy_strikes(tragedy_probability):
                 person.death_year = current_year
                 person.age_at_death = abs(person.death_year - person.birth_year)
+                person.cause_of_death = "tragedy"
                 continue
-
             # Normal Death?
-            person.you_have_died(death_config, current_year)
+            elif person.you_have_died(death_config, current_year):
+                continue
 
             # Marriage?
             new_spouse = person.check_marriage(
                 marriage_confg, current_year, living_people
             )
-
+            # Add the new spouse, if found
             if new_spouse is not None:
                 new_people[new_spouse.id] = new_spouse
 
             # Gets pregnant?
-
-            # check for infertile
 
             # New baby?
             if person.pregnant:

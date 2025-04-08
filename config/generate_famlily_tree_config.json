@@ -15,9 +15,9 @@
         "marriage_respects_queerness": "True"
     },
     "death_config": {
-        "average_death_age": 70,
-        "death_tail": 20,
-        "death_std_deviation": 2.5,
-        "tragedy_probability": 0.01
+        "average_death_age": 30,
+        "death_chance_accel": 0.6,
+        "max_death_chance": 0.8,
+        "tragedy_probability": 0.1
     }
 }
