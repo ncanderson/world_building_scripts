@@ -15,15 +15,16 @@
         "marriage_respects_queerness": "True"
     },
     "bebe": {
-        "min_fert": 0,
-        "max_fert": 1,
-        "bebe_mean": 0.5,
-        "bebe_std_deviation": 0.5
+        "min_fert_mod": 0,
+        "max_fert_mod": 0.25,
+        "fert_mod_mean": 0.125,
+        "fert_mod_std_dev": 0.5,
+        "die_in_childbirth_chance": 0.1
     },
     "death_config": {
         "average_death_age": 30,
         "death_chance_accel": 0.6,
         "max_death_chance": 0.8,
-        "tragedy_probability": 0.1
+        "tragedy_probability": 0.05
     }
 }

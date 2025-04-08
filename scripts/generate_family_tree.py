@@ -112,11 +112,12 @@ class Person:
         self.death_age = None
         self.cause_of_death = None
         self.fertility_modifier = Helpers.generate_weighted_float(
-            self.min_fert, self.max_fert, self.bebe_mean, self.bebe_std_deviation
+            self.min_fert_mod, self.max_fert_mod, self.fert_mod_mean, self.fert_mod_std_dev
         )
         self.pregnant = False
         self.children = []
         self.spouses = []
+        self.parents = []
 
         # Gender assigned at birth, 50/50 chance
         self.gab = Person.equal_chance(
@@ -161,6 +162,7 @@ class Person:
             "pregnant": self.pregnant,
             "children": [child for child in self.children],
             "spouses": [spouse for spouse in self.spouses],
+            "parents": [parent for parent in self.parents],
             "gab": self.gab.value,
             "can_bear_children": self.can_bear_children,
             "can_sire_children": self.can_sire_children,
@@ -559,7 +561,7 @@ class Person:
 
     ###########################################################################
 
-    def you_are_pregnant(self, living_people, new_people):
+    def you_are_pregnant(self, living_people, new_people, fertility_rates) -> bool:
         """!
         @brief Check for pregnancy. This will set the 'self' attr, but
         also returns a boolean if that is relevant to anyone.
@@ -567,28 +569,69 @@ class Person:
         """
         if not self.can_bear_children or self.infertile is True:
             return False
-        else:
-            #print(json.dumps([p.to_dict() for p in living_people.values()], indent=4))
-            for spouse in self.spouses:
 
-                if spouse in living_people:
-                    this_spouse = living_people[spouse]
-                elif spouse in new_people:
-                    this_spouse = new_people[spouse]
-                else:
-                    raise KeyError("Spouse not found in either dictionary")
+        # Set up this spouse
+        this_spouse = None
 
-                if not this_spouse.can_sire_children:
-                    return False
+        # Check spouses
+        for spouse in self.spouses:
+            # Find spouse
+            if spouse in living_people:
+                this_spouse = living_people[spouse]
+            elif spouse in new_people:
+                this_spouse = new_people[spouse]
+            else:
+                raise KeyError("Spouse not found in either dictionary")
+            # Return if we can't bear or if partner can't sire
+            if not self.can_bear_children or not this_spouse.can_sire_children:
+                return False
 
-                average_fertility = (self.fertility_modifier + this_spouse.fertility_modifier) / 2
+            # Get fert prob by age and modifier
+            # TODO: adoption? infidelity?
+            my_fert = fertility_rates.get(str(self.age)).get("can_bear") + self.fertility_modifier
+            spouse_fert = fertility_rates.get(str(this_spouse.age)).get("can_sire") + this_spouse.fertility_modifier
 
-                if random.random() < average_fertility:
-                    self.pregnant = True
-                    return True
+            # Take the average I guess
+            average_fertility = (my_fert + spouse_fert) / 2
+
+            if random.random() < average_fertility:
+                self.pregnant = True
+                self.presumed_sire = this_spouse.id
+                return True
+
+        return False
 
     ###########################################################################
 
+    def have_a_baby(self, current_year, bebe_config):
+        """!
+        @brief Handle changes required for having a baby
+        """
+        die_in_birth_chance = bebe_config["die_in_childbirth_chance"]
+
+        # Baby dies
+        if Helpers.tragedy_strikes(die_in_birth_chance):
+            self.death_year = current_year
+            self.death_age = abs(self.death_year - self.birth_year)
+            self.cause_of_death = "tragedy"
+            return
+        bebe = Person(current_year)
+        bebe.created_as = "bebe"
+        bebe.parents.append(self.id)
+        bebe.parents.append(self.presumed_sire)
+        self.pregnant = False
+
+
+        # Die after baby born
+        if Helpers.tragedy_strikes(die_in_birth_chance):
+            self.death_year = current_year
+            self.death_age = abs(self.death_year - self.birth_year)
+            self.cause_of_death = "tragedy"
+
+        return bebe
+
+
+    ###########################################################################
 
 # End of Person
 ###############################################################################
@@ -669,7 +712,7 @@ def main():
 
     # Run through each year
     while current_year is not None:
-        print(f"Simulating year: {current_year}")
+        #print(f"Simulating year: {current_year}")
         # print(f"living_people: {len(living_people)}")
 
         new_people = {}
@@ -680,7 +723,7 @@ def main():
             # Tragedy?
             if Helpers.tragedy_strikes(tragedy_probability):
                 person.death_year = current_year
-                person.age_at_death = abs(person.death_year - person.birth_year)
+                person.death_age = abs(person.death_year - person.birth_year)
                 person.cause_of_death = "tragedy"
                 continue
             # Normal Death?
@@ -700,13 +743,15 @@ def main():
 
             # New baby?
             if person.pregnant is True:
-                bebe = Person(current_year)
-                bebe.created_as = "bebe"
-                new_people[bebe.id] = bebe
-                person.pregnant = False
-
+                bebe = person.have_a_baby(current_year, bebe_config)
+                if bebe is not None:
+                    new_people[bebe.id] = bebe
             # Gets pregnant?
-            person.you_are_pregnant(living_people, new_people)
+            elif person.pregnant is False:
+                json_preg = json.dumps(person.to_dict(), indent=4)
+                if person.pregnant is True:
+                    print(json_preg)
+                person.you_are_pregnant(living_people, new_people, fertility_rates)
 
         # Slop the new people into the dict
         living_people = new_people | living_people
