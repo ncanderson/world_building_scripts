@@ -69,12 +69,11 @@ class Person:
     DEFAULTS = {}
 
     @classmethod
-    def load_defaults(cls, config_file):
+    def load_defaults(cls, default_config):
         """!
         @brief Load any defaults needed by this class
         """
-        with open(config_file, "r") as f:
-            cls.DEFAULTS = json.load(f)
+        cls.DEFAULTS = default_config
 
     ###########################################################################
 
@@ -556,21 +555,37 @@ class Person:
             1 + math.exp(-death_chance_accel * (self.age - average_death_age))
         )
         death_chance = min(max_death_chance, logistic * max_death_chance)
-        print(death_chance)
         return random.random() < death_chance
 
     ###########################################################################
 
-    def you_are_pregnant(self, bebe_config):
+    def you_are_pregnant(self, living_people, new_people):
         """!
         @brief Check for pregnancy. This will set the 'self' attr, but
         also returns a boolean if that is relevant to anyone.
         @returns True if person is pregnant
         """
-        min_fert = bebe_config["min_fert"]
-        max_fert = bebe_config["max_fert"]
-        bebe_mean = bebe_config["bebe_mean"]
-        bebe_std_deviation = bebe_config["bebe_std_deviation"]
+        if not self.can_bear_children or self.infertile is True:
+            return False
+        else:
+            #print(json.dumps([p.to_dict() for p in living_people.values()], indent=4))
+            for spouse in self.spouses:
+
+                if spouse in living_people:
+                    this_spouse = living_people[spouse]
+                elif spouse in new_people:
+                    this_spouse = new_people[spouse]
+                else:
+                    raise KeyError("Spouse not found in either dictionary")
+
+                if not this_spouse.can_sire_children:
+                    return False
+
+                average_fertility = (self.fertility_modifier + this_spouse.fertility_modifier) / 2
+
+                if random.random() < average_fertility:
+                    self.pregnant = True
+                    return True
 
     ###########################################################################
 
@@ -654,7 +669,7 @@ def main():
 
     # Run through each year
     while current_year is not None:
-        # print(f"Simulating year: {current_year}")
+        print(f"Simulating year: {current_year}")
         # print(f"living_people: {len(living_people)}")
 
         new_people = {}
@@ -672,6 +687,9 @@ def main():
             elif person.you_have_died(death_config, current_year):
                 continue
 
+            # Age up
+            person.age += 1
+
             # Marriage?
             new_spouse = person.check_marriage(
                 marriage_confg, current_year, living_people
@@ -680,17 +698,15 @@ def main():
             if new_spouse is not None:
                 new_people[new_spouse.id] = new_spouse
 
-            # Gets pregnant?
-
             # New baby?
-            if person.pregnant:
+            if person.pregnant is True:
                 bebe = Person(current_year)
-                bebe.created_as("bebe")
+                bebe.created_as = "bebe"
                 new_people[bebe.id] = bebe
                 person.pregnant = False
 
-            # Age up
-            person.age += 1
+            # Gets pregnant?
+            person.you_are_pregnant(living_people, new_people)
 
         # Slop the new people into the dict
         living_people = new_people | living_people
@@ -701,7 +717,6 @@ def main():
         )
 
     # End of main loop
-
     json_living = json.dumps([p.to_dict() for p in living_people.values()], indent=4)
     print(json_living)
 
