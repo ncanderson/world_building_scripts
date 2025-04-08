@@ -112,7 +112,9 @@ class Person:
         self.death_year = None
         self.death_age = None
         self.cause_of_death = None
-        self.fertility_modifier = Helpers.generate_weighted_float(self.min_fert, self.max_fert, self.bebe_mean, self.bebe_std_deviation)
+        self.fertility_modifier = Helpers.generate_weighted_float(
+            self.min_fert, self.max_fert, self.bebe_mean, self.bebe_std_deviation
+        )
         self.pregnant = False
         self.children = []
         self.spouses = []
@@ -550,7 +552,9 @@ class Person:
         death_chance_accel = death_config["death_chance_accel"]
         max_death_chance = death_config["max_death_chance"]
 
-        logistic = 1 / (1 + math.exp(-death_chance_accel * (self.age - average_death_age)))
+        logistic = 1 / (
+            1 + math.exp(-death_chance_accel * (self.age - average_death_age))
+        )
         death_chance = min(max_death_chance, logistic * max_death_chance)
         print(death_chance)
         return random.random() < death_chance
@@ -567,7 +571,6 @@ class Person:
         max_fert = bebe_config["max_fert"]
         bebe_mean = bebe_config["bebe_mean"]
         bebe_std_deviation = bebe_config["bebe_std_deviation"]
-
 
     ###########################################################################
 
