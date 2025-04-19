@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+import sys
 import random
 import math
 import json
 import uuid
 from enum import Enum
+from datetime import datetime
 
 # TODO Make this work with BTR/TR. probably start at zero, then use abs(negative numbers)
 # to determine correct year
@@ -115,6 +117,7 @@ class Person:
             self.min_fert_mod, self.max_fert_mod, self.fert_mod_mean, self.fert_mod_std_dev
         )
         self.pregnant = False
+        self.presumed_sire = None
         self.children = []
         self.spouses = []
         self.parents = []
@@ -160,6 +163,7 @@ class Person:
             "cause_of_death": self.cause_of_death,
             "fertility_modifier": self.fertility_modifier,
             "pregnant": self.pregnant,
+            "presumed_sire": self.presumed_sire,
             "children": [child for child in self.children],
             "spouses": [spouse for spouse in self.spouses],
             "parents": [parent for parent in self.parents],
@@ -495,7 +499,7 @@ class Person:
             average_marriage_age,
             marriage_std_deviation,
         )
-        if age_check <= self.age:
+        if age_check >= self.age:
             # too young, try next year
             # In theory, a person could have one young marriage and then no more
             # for years.
@@ -506,9 +510,10 @@ class Person:
             # Use random age we generate earlier
             # TODO Make this work with BTR/TR
             new_spouse = self.create_new_spouse(
-                current_year + age_check, marriage_respects_queerness
+                current_year + math.floor(age_check), marriage_respects_queerness
             )
-
+            # TODO this will cause issues around year 0
+            new_spouse.age = abs(current_year - new_spouse.birth_year)
             self.spouses.append(new_spouse.id)
             new_spouse.spouses.append(self.id)
             new_spouse.created_as = "generated spouse"
@@ -615,12 +620,12 @@ class Person:
             self.death_age = abs(self.death_year - self.birth_year)
             self.cause_of_death = "tragedy"
             return
+
         bebe = Person(current_year)
         bebe.created_as = "bebe"
         bebe.parents.append(self.id)
         bebe.parents.append(self.presumed_sire)
         self.pregnant = False
-
 
         # Die after baby born
         if Helpers.tragedy_strikes(die_in_birth_chance):
@@ -673,8 +678,10 @@ def main():
     path_to_app_config = "/home/nanderson/nate_personal/projects/world_building_scripts/config/generate_famlily_tree_config.json"
     app_config = load_json_data(path_to_app_config)
 
-    # Load some defaults
-    # TODO Organize the config into sub-maps
+    # Meta confing
+    meta_config = app_config["meta_config"]
+
+    # Time
     time_config = app_config["time_config"]
     is_btr = time_config["is_btr"]
     generation_start_year = time_config["generation_start_year"]
@@ -712,7 +719,7 @@ def main():
 
     # Run through each year
     while current_year is not None:
-        #print(f"Simulating year: {current_year}")
+        print(f"Simulating year: {current_year}")
         # print(f"living_people: {len(living_people)}")
 
         new_people = {}
@@ -746,33 +753,34 @@ def main():
                 bebe = person.have_a_baby(current_year, bebe_config)
                 if bebe is not None:
                     new_people[bebe.id] = bebe
+                    # Update with first parent
+                    person.children.append(bebe.id)
+                    if person.presumed_sire in living_people:
+                        living_people[person.presumed_sire].children.append(bebe.id)
+                    elif person.presumed_sire in new_people:
+                        new_people[person.presumed_sire].children.append(bebe.id)
+                    # Reset presumed sire, ready for next interation
+                    person.presumed_sire = None
+
             # Gets pregnant?
             elif person.pregnant is False:
-                json_preg = json.dumps(person.to_dict(), indent=4)
-                if person.pregnant is True:
-                    print(json_preg)
                 person.you_are_pregnant(living_people, new_people, fertility_rates)
 
         # Slop the new people into the dict
         living_people = new_people | living_people
 
-        # Update year, ensure we can exit the while loop
         current_year = update_year(
             current_year, year_steps, is_btr, generation_end_year
         )
 
     # End of main loop
-    json_living = json.dumps([p.to_dict() for p in living_people.values()], indent=4)
-    print(json_living)
 
-    # for person in living_people:
-    #     for attr, value in vars(person).items():
-    #         print(f"{attr}: {value}")
-    # print("======================================================")
-    # for spouse in person.spouses:
-    #    for attr, value in vars(person).items():
-    #        print(f"{attr}: {value}")
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    output_path = meta_config.get("output_file_path")
+    file_output = f"{output_path}/{timestamp}_generated_family_tree.json"
 
+    with open(file_output, 'w') as f:
+        json.dump([p.to_dict() for p in living_people.values()], f, indent=4)
 
 # End of main()
 ###########################################################################

@@ -26,5 +26,8 @@
         "death_chance_accel": 0.6,
         "max_death_chance": 0.8,
         "tragedy_probability": 0.05
+    },
+    "meta_config": {
+        "output_file_path": "/home/nanderson/nate_personal/projects/world_building_scripts/output/"
     }
 }
